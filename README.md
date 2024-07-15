@@ -13,3 +13,70 @@ above categories.
 
 
 [Hate Speech Detection.pdf](https://github.com/user-attachments/files/16231602/Hate.Speech.Detection.pdf)
+
+
+import pandas as pd 
+import re 
+import nltk 
+from nltk.corpus import stopwords 
+from nltk.stem import WordNetLemmatizer 
+from sklearn.feature_extraction.text import TfidfVectorizer 
+from sklearn.model_selection import train_test_split 
+from sklearn.linear_model import LogisticRegression 
+from 
+sklearn.metrics 
+import 
+confusion_matrix 
+import seaborn as sns 
+import matplotlib.pyplot as plt 
+# Load the dataset 
+data = pd.read_csv("twitter.csv") 
+# Drop the unnecessary columns 
+data 
+accuracy_score, 
+= data.drop(columns=['Unnamed: 
+'offensive_language', 'neither']) 
+# Print column names to verify 
+print(data.columns)   
+# Data Clean
+def preprocess_text(text): 
+# Remove special characters, URLs, and lowercase 
+text = text.lower() 
+text = ' '.join(filter(lambda x: x[0] != '@', text.split()))   
+text = re.sub(r'http\S+', '', text)   
+text = re.sub(r'[^a-zA-Z\s]', '', text)   
+# Tokenize, remove stop words, and lemmatize 
+stop_words = set(stopwords.words('english')) 
+lemmatizer = WordNetLemmatizer() 
+words = text.split() 
+words = [lemmatizer.lemmatize(word) for word in words if word not in 
+stop_words] 
+return ' '.join(words) 
+data['tweet'] = data['tweet'].apply(preprocess_text) 
+# Define feature and target variables 
+X = data['tweet'] 
+y = data['class']  # 'class' is the target variable 
+# Split data into train and test sets 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, 
+random_state=42) 
+# Feature extraction using TF-IDF 
+vectorizer = TfidfVectorizer() 
+X_train = vectorizer.fit_transform(X_train) 
+X_test = vectorizer.transform(X_test) 
+# Train a logistic regression model with class weight adjustment for imbalance 
+model = LogisticRegression(max_iter=1000, class_weight='balanced')  # Added 
+class_weight='balanced' 
+model.fit(X_train, y_train) 
+# Make predictions 
+y_pred = model.predict(X_test) 
+# Evaluate the model 
+print("Accuracy:", accuracy_score(y_test, y_pred)) 
+print("Classification Report:\n", classification_report(y_test, y_pred)) 
+cm = confusion_matrix(y_test, y_pred, labels=model.classes_) 
+plt.figure(figsize=(5, 5)) 
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=model.classes_, 
+yticklabels=model.classes_) 
+plt.xlabel('Predicted Labels') 
+plt.ylabel('True Labels') 
+plt.title(' Matrix Heatmap') 
+plt.show()
